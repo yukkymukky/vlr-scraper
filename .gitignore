@@ -1,3 +1,5 @@
 .env
 vlr_threads_*
 __pycache__/
+spiders/__pycache__
+/vlr/spiders/__pycache__
