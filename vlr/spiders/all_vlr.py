@@ -38,7 +38,6 @@ class AllVlrSpider(scrapy.Spider):
             "upvote_count": 0,
             "downvote_count": 0,
             "dead_count": 0,
-            "y0y_count": 0,
             "biggest_upvote": -1,
             "biggest_upvote_url": "",
             "biggest_downvote": 0,

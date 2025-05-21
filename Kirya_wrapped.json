@@ -1,0 +1,64 @@
+{
+  "username": "Kirya",
+  "year": "2025",
+  "total_posts_this_year": 1678,
+  "upvotes_this_year": 633,
+  "downvotes_this_year": -1351,
+  "net_votes_this_year": -718,
+  "most_active_month": 1,
+  "longest_post_streak_days": 16,
+  "top_5_posts_by_interaction": [
+    {
+      "url": "https://www.vlr.gg/post/4838950/florescent-steps-back-from-vct",
+      "upvotes": 0,
+      "downvotes": -34,
+      "interaction": 34
+    },
+    {
+      "url": "https://www.vlr.gg/post/4617289/pregnant-cned",
+      "upvotes": 33,
+      "downvotes": 0,
+      "interaction": 33
+    },
+    {
+      "url": "https://www.vlr.gg/post/4525508/top-5-val-streamers",
+      "upvotes": 0,
+      "downvotes": -23,
+      "interaction": 23
+    },
+    {
+      "url": "https://www.vlr.gg/post/4493222/top-10-duos-of-all-time",
+      "upvotes": 0,
+      "downvotes": -22,
+      "interaction": 22
+    },
+    {
+      "url": "https://www.vlr.gg/post/4464000/edg-fluke",
+      "upvotes": 0,
+      "downvotes": -19,
+      "interaction": 19
+    }
+  ],
+  "top_5_biggest_fans": [
+    {
+      "user": "1243",
+      "replies": 103
+    },
+    {
+      "user": "danii1",
+      "replies": 69
+    },
+    {
+      "user": "shrike-",
+      "replies": 53
+    },
+    {
+      "user": "yukky",
+      "replies": 44
+    },
+    {
+      "user": "Prasinos",
+      "replies": 43
+    }
+  ]
+}
