@@ -246,7 +246,6 @@ class AllVlrSpider(scrapy.Spider):
         return (count, 0) if count > 0 else (0, count) if count < 0 else (0, 0)
 
     def closed(self, reason):
-        # longest consecutive posting‑days streak
         longest = 0
         if self.day_posts_this_year:
             sorted_days = sorted(self.day_posts_this_year)
