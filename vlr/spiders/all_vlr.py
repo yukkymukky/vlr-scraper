@@ -94,7 +94,10 @@ class AllVlrSpider(scrapy.Spider):
                 ).date()
                 op_id = response.url + "#op"
                 if op_id not in self.counted_post_ids:
-                    self._count_year_post(op_date, original_up, original_down, op_id)
+                    op_quote = self.get_full_quote(
+                        response.xpath('//a[@id="1"]/following-sibling::div[contains(@class,"post-header")]')
+                    )
+                    self._count_year_post(op_date, original_up, original_down, op_id, op_quote)
 
             # all‑time totals
             self._update_totals(original_up, original_down)
@@ -142,7 +145,8 @@ class AllVlrSpider(scrapy.Spider):
 
             # year metrics
             if post_url not in self.counted_post_ids:
-                self._count_year_post(post_date, upvotes, downvotes, post_url)
+                full_quote = self.get_full_quote(post_author)
+                self._count_year_post(post_date, upvotes, downvotes, post_url, full_quote)
 
             # all‑time vote totals & biggest ±votes
             self._update_totals(upvotes, downvotes)
@@ -172,7 +176,7 @@ class AllVlrSpider(scrapy.Spider):
         )
         return up, down
 
-    def _count_year_post(self, post_date, up, down, unique_id):
+    def _count_year_post(self, post_date, up, down, unique_id, quote=""):
         self.year_posts += 1
         self.year_upvotes += up
         self.year_downvotes += down
@@ -180,7 +184,13 @@ class AllVlrSpider(scrapy.Spider):
         self.month_counts[post_date.month] += 1
         interaction = abs(up) + abs(down)
         self.interacted_posts.append(
-            {"url": unique_id, "upvotes": up, "downvotes": down, "interaction": interaction}
+            {
+                "url": unique_id,
+                "upvotes": up,
+                "downvotes": down,
+                "interaction": interaction,
+                "comment": quote
+            }
         )
         self.counted_post_ids.add(unique_id)
 

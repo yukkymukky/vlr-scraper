@@ -42,6 +42,8 @@ To use the scraper be under the same directory as the `scrapy.cfg` file and run 
 
 ```
 scrapy crawl vlr -a username=<username>
+or
+./run.sh <username>
 ```
 
 This will then create a json of the entered username `<username>_wrapped.json`.

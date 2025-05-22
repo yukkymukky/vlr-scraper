@@ -69,7 +69,7 @@
 
     .card-container {
       width: 1200px;
-      height: 630px;
+      height: 720px;
       position: relative;
       overflow: hidden;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -156,7 +156,6 @@
       background-color: rgba(255, 255, 255, 0.05);
       border-radius: 10px;
       padding: 20px;
-      margin-bottom: 15px;
       position: relative;
       overflow: hidden;
     }
@@ -278,7 +277,7 @@
       justify-content: space-between;
       align-items: center;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
-      padding-top: 20px;
+      padding-top: 10px;
     }
 
     .vlr-logo {
@@ -289,7 +288,7 @@
 
     .footer-text {
       font-size: 0.9rem;
-      color: rgba(236, 232, 225, 0.7);
+      color: rgba(255, 255, 255, 0.795);
     }
 
     .vote-bar {
@@ -338,6 +337,33 @@
         font-size: 2rem;
       }
     }
+
+    .post-comment {
+      display: flex;
+      align-items: flex-start;
+      gap: 2px;
+      margin-top: 2px;
+    }
+
+    .comment-quote {
+      color: var(--primary);
+      font-size: 0.7rem;
+      line-height: 1;
+      margin-top: 1px;
+      margin-left: 2px;
+    }
+
+    .comment-text {
+      font-size: 0.6rem;
+      color: rgba(255, 255, 255, 0.8);
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-grow: 1;
+    }
   </style>
 </head>
 <body>
@@ -354,18 +380,18 @@
       <div class="card-content">
         <div class="card-header">
           <div>
-            <div class="card-title">VLR.GG WRAPPED</div>
+            <div class="card-title">VLR WRAPPED 2025</div>
               <div class="card-username" id="username" style =" display: flex; justify-content: left; align-items: center; gap:5px;">
                 <img id="flag-icon" src="" alt="flag" style="height: 25px; vertical-align: middle; display: none;" />
                 <span id="username-text">Username</span>
                 <img id="flair-icon" src="" alt="flair" style="height: 25px; vertical-align: middle; display: none;" />
               </div>
           </div>
-          <div class="card-year" id="year">2025</div>
+          <div class="card-year" id="year"></div>
         </div>
 
         <div class="stats-section">
-          <div>
+          
             <div class="stat-box">
               <div class="stat-title">TOTAL POSTS</div>
               <div class="stat-value" id="total-posts">0</div>
@@ -379,7 +405,6 @@
               <div class="vote-bar"><div class="downvote-fill" id="downvote-bar"></div></div>
               <div class="stat-caption"><span id="upvotes">0</span> upvotes, <span id="downvotes">0</span> downvotes</div>
             </div>
-          </div>
 
           <div class="stat-box">
             <div class="stat-title">LONGEST STREAK</div>
@@ -399,8 +424,10 @@
         </div>
 
         <div class="card-footer">
-          <div class="vlr-logo">VLR.GG</div>
-          <div class="footer-text">Thanks for being part of the community!</div>
+          <div>
+            <img src ="https://www.vlr.gg/img/vlr/logo_header.png" alt="VLR Logo" style="height: 30px; vertical-align: middle;" />
+          </div>
+          <div class="footer-text">made by yukky!</div>
         </div>
       </div>
     </div>
@@ -413,6 +440,7 @@
         const data = JSON.parse(jsonInput);
         renderData(data);
       } catch {
+
         alert('Invalid JSON format.');
       }
     });
@@ -435,7 +463,6 @@
       } else {
         flairIcon.style.display = 'none';
       }      
-      document.getElementById('year').textContent = data.year;
       document.getElementById('total-posts').textContent = data.total_posts_this_year;
       const now = new Date();
       const currentMonth = now.getMonth() + 1;
@@ -463,7 +490,13 @@
         const name = post.url.split('/').pop();
         postsContainer.innerHTML += `
           <div class="post-item">
-            <div class="post-url">${name}</div>
+            <div>
+              <div class="post-url">${name}</div>
+              <div class="post-comment">
+                <div class="comment-quote">▸</div>
+                <div class="comment-text">${post.comment || "No comment available"}</div>
+              </div>
+            </div>
             <div class="post-votes">
               ${post.upvotes > 0 ? `<span class="upvotes">+${post.upvotes}</span>` : ''}
               ${post.downvotes < 0 ? `<span class="downvotes">${post.downvotes}</span>` : ''}
