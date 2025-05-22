@@ -445,6 +445,15 @@
       }
     });
 
+    function escapeHTML(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     function renderData(data) {
       document.getElementById('username-text').textContent = data.username;
 
@@ -494,7 +503,7 @@
               <div class="post-url">${name}</div>
               <div class="post-comment">
                 <div class="comment-quote">▸</div>
-                <div class="comment-text">${post.comment || "No comment available"}</div>
+                <div class="comment-text">${escapeHTML(post.comment || "No comment available")}</div>
               </div>
             </div>
             <div class="post-votes">
