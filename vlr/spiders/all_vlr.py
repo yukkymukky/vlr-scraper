@@ -278,6 +278,17 @@ class AllVlrSpider(scrapy.Spider):
 
         top_fans = sorted(self.reply_counter.items(), key=lambda kv: kv[1], reverse=True)[:5]
 
+        with open('team_logos.json', 'r') as f:
+          team_logos = json.load(f)
+
+        light_url = self.user_item.get("flair_url")
+        dark_url = None
+        for entry in team_logos:
+            team_name, urls = next(iter(entry.items()))
+            if urls.get("light_mode_url") == light_url:
+                dark_url = urls.get("dark_mode_url")
+                break
+
         wrapped = {
             "username": self.username,
             "year": self.this_year,
@@ -290,7 +301,7 @@ class AllVlrSpider(scrapy.Spider):
             "top_5_posts_by_interaction": top_posts,
             "top_5_biggest_fans": [{"user": u, "replies": n} for u, n in top_fans],
             "flag_code": self.user_item.get("flag_code"),
-            "flair_url": self.user_item.get("flair_url"),
+            "flair_url": dark_url or light_url 
         }
 
         with open(f"{self.username}_wrapped.json", "w", encoding="utf-8") as fp:
