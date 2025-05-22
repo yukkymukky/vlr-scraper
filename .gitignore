@@ -3,3 +3,6 @@ vlr_threads_*
 __pycache__/
 spiders/__pycache__
 /vlr/spiders/__pycache__
+
+*.json
+Kirya_wrapped.json

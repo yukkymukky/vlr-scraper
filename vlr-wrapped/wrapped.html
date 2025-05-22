@@ -343,12 +343,11 @@
 <body>
   <div class="controls">
     <button id="load-custom">Load Custom JSON</button>
-    <button id="save-image">Save as Image</button>
   </div>
 
   <textarea id="json-input" class="json-input" placeholder="Paste your JSON data here..."></textarea>
 
-  <div class="card-container">
+  <div class="card-container" id="card-container">
     <div class="wrapped-card" id="wrapped-card">
       <div class="background-pattern"></div>
       <div class="background-dots"></div>
@@ -356,9 +355,11 @@
         <div class="card-header">
           <div>
             <div class="card-title">VLR.GG WRAPPED</div>
-            <div class="card-username" id="username">
-              Username
-            </div>
+              <div class="card-username" id="username" style =" display: flex; justify-content: left; align-items: center; gap:5px;">
+                <img id="flag-icon" src="" alt="flag" style="height: 25px; vertical-align: middle; display: none;" />
+                <span id="username-text">Username</span>
+                <img id="flair-icon" src="" alt="flair" style="height: 25px; vertical-align: middle; display: none;" />
+              </div>
           </div>
           <div class="card-year" id="year">2025</div>
         </div>
@@ -416,41 +417,34 @@
       }
     });
 
-    document.getElementById('save-image').addEventListener('click', () => {
-      const card = document.getElementById('wrapped-card');
-      const saveButton = document.getElementById('save-image');
-      const originalText = saveButton.textContent;
-      saveButton.textContent = 'Generating...';
-      saveButton.disabled = true;
-
-      setTimeout(() => {
-        html2canvas(card, {
-          scale: 2,
-          backgroundColor: null,
-          useCORS: true,
-          allowTaint: true,
-          width: 1200,
-          height: 630
-        }).then(canvas => {
-          const link = document.createElement('a');
-          link.download = `vlrgg-wrapped.png`;
-          link.href = canvas.toDataURL('image/png');
-          link.click();
-          saveButton.textContent = originalText;
-          saveButton.disabled = false;
-        }).catch(() => {
-          alert('Error generating image.');
-          saveButton.textContent = originalText;
-          saveButton.disabled = false;
-        });
-      }, 100);
-    });
-
     function renderData(data) {
-      document.getElementById('username').textContent = data.username;
+      document.getElementById('username-text').textContent = data.username;
+
+      const flagIcon = document.getElementById('flag-icon');
+      if (data.flag_code) {
+        flagIcon.src = `https://www.vlr.gg/img/icons/flags/32/${data.flag_code}.png`;
+        flagIcon.style.display = 'inline';
+      } else {
+        flagIcon.style.display = 'none';
+      }
+
+      const flairIcon = document.getElementById('flair-icon');
+      if (data.flair_url) {
+        flairIcon.src = data.flair_url;
+        flairIcon.style.display = 'inline';
+      } else {
+        flairIcon.style.display = 'none';
+      }      
       document.getElementById('year').textContent = data.year;
       document.getElementById('total-posts').textContent = data.total_posts_this_year;
-      document.getElementById('posts-caption').textContent = `That's about ${(data.total_posts_this_year / 12).toFixed(1)} posts per month!`;
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+      const postsPerMonth = (data.total_posts_this_year / currentMonth).toFixed(1);
+      const postsPerDay = (data.total_posts_this_year / dayOfYear).toFixed(2);
+
+      document.getElementById('posts-caption').textContent =
+        `About ${postsPerMonth} posts per month—or around ${postsPerDay} per day so far this year.`;
       document.getElementById('net-votes').textContent = data.net_votes_this_year >= 0 ? `+${data.net_votes_this_year}` : data.net_votes_this_year;
       document.getElementById('upvotes').textContent = data.upvotes_this_year;
       document.getElementById('downvotes').textContent = Math.abs(data.downvotes_this_year);

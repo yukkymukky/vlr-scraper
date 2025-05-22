@@ -45,6 +45,8 @@ class AllVlrSpider(scrapy.Spider):
             "biggest_upvote_quote": "",
             "biggest_downvote_quote": "",
             "reply_user": {},
+            "flag_url": "",
+            "flair_url": "",
         }
 
     def parse(self, response):
@@ -109,6 +111,23 @@ class AllVlrSpider(scrapy.Spider):
             post_url = self.get_full_url(post_author, post_url_xpath, response)
             if post_url in self.processed_urls:
                 continue
+            if not self.user_item.get("flag_code") and not self.user_item.get("flair_url"):
+              post_card = post_author.xpath("./ancestor::div[contains(@class,'wf-card post')]")
+
+              flag_class = post_card.xpath('.//i[contains(@class,"post-header-flag")]/@class').get()
+              flair_url = post_card.xpath('.//img[contains(@class,"post-header-flair")]/@src').get()
+
+              if flair_url and flair_url.startswith("//"):
+                  flair_url = "https:" + flair_url
+
+              flag_code = None
+              if flag_class and "mod-" in flag_class:
+                  parts = flag_class.split("mod-")
+                  if len(parts) > 1:
+                      flag_code = parts[1].strip()
+
+              self.user_item["flag_code"] = flag_code
+              self.user_item["flair_url"] = flair_url
             self.processed_urls.add(post_url)
 
             date_title = post_author.xpath(
@@ -215,16 +234,16 @@ class AllVlrSpider(scrapy.Spider):
             '//a[@id="1"]/following-sibling::div[contains(@class,"post-header")]/'
             'a[contains(@class,"post-header-author")]/text()'
         ).get()
-        if author and author.strip() == self.username:
-            count = int(
-                response.xpath("//div[@id='thread-frag-count']/text()").get().strip() or 0
-            )
-            if count > 0:
-                return count, 0
-            elif count < 0:
-                return 0, count
-            return 0, 0
-        return -1, -1
+
+        if not author or author.strip() != self.username:
+            return -1, -1          
+
+        frag_txt = response.xpath("//div[@id='thread-frag-count']/text()").get()
+
+        if frag_txt is None:        
+            return -1, -1           
+        count = int(frag_txt.strip() or 0)
+        return (count, 0) if count > 0 else (0, count) if count < 0 else (0, 0)
 
     def closed(self, reason):
         # longest consecutive posting‑days streak
@@ -261,6 +280,8 @@ class AllVlrSpider(scrapy.Spider):
             "longest_post_streak_days": longest,
             "top_5_posts_by_interaction": top_posts,
             "top_5_biggest_fans": [{"user": u, "replies": n} for u, n in top_fans],
+            "flag_code": self.user_item.get("flag_code"),
+            "flair_url": self.user_item.get("flair_url"),
         }
 
         with open(f"{self.username}_wrapped.json", "w", encoding="utf-8") as fp:
