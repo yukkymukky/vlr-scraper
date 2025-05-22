@@ -1,5 +1,7 @@
 # VLR Scraper
 
+**THIS DOES NOT WORK PROPERLY, DON'T USE IT!**
+
 A Scrapy-based web scraper designed to extract every user post from [VLR.gg](https://vlr.gg).
 
 ## Features
