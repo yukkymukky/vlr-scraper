@@ -1,6 +1,7 @@
 import scrapy
 from scrapy.crawler import CrawlerProcess
 import requests
+import os
 import json                                   
 from datetime import datetime, timedelta      
 from dateutil import parser as dateparser 
@@ -304,7 +305,8 @@ class AllVlrSpider(scrapy.Spider):
             "flair_url": dark_url or light_url 
         }
 
-        with open(f"{self.username}_wrapped.json", "w", encoding="utf-8") as fp:
+        os.makedirs("wrapped-data", exist_ok=True)
+        with open(f"wrapped-data/{self.username}_wrapped.json", "w", encoding="utf-8") as fp:
             json.dump(wrapped, fp, indent=2, ensure_ascii=False)
 
 if __name__ == "__main__":
