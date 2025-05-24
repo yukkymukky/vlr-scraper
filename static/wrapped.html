@@ -566,9 +566,12 @@
 
       if (data.flair_url) {
           const teamLogoBg = document.getElementById('team-logo');
+          teamLogoBg.style.opacity = 1;
           teamLogoBg.style.setProperty('--team-logo-url', `url(${data.flair_url})`);
           teamLogoBg.style.backgroundImage = `url(${data.flair_url})`;
-      }   
+      } else {
+        const teamLogoBg = document.getElementById('team-logo').style.opacity = 0;
+      }
 
       document.getElementById('total-posts').textContent = data.total_posts_this_year;
       const now = new Date();
