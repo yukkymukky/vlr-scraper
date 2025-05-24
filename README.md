@@ -38,14 +38,8 @@ Before you start, ensure you have the following:
 
 ## Usage
 
-To use the scraper be under the same directory as the `scrapy.cfg` file and run the following:
-
 ```
-scrapy crawl vlr -a username=<username>
-or
-./run.sh <username>
+  python3 server.py
 ```
 
-This will then create a json of the entered username `<username>_wrapped.json`.
-
-Afterwards, launch `wrapped.html` anyway you want, and paste in the JSON file to get the wrapped image.
+Navigate to 127.0.0.1:5000 and get to work.

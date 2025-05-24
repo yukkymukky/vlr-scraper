@@ -8,6 +8,89 @@ from dateutil import parser as dateparser
 from collections import defaultdict    
 from urllib.parse import urljoin
 
+tzinfos = {
+    # North America
+    'EST': -5 * 3600,
+    'EDT': -4 * 3600,
+    'CST': -6 * 3600,
+    'CDT': -5 * 3600,
+    'MST': -7 * 3600,
+    'MDT': -6 * 3600,
+    'PST': -8 * 3600,
+    'PDT': -7 * 3600,
+    'AKST': -9 * 3600,
+    'AKDT': -8 * 3600,
+    'HST': -10 * 3600,
+
+    # Atlantic
+    'AST': -4 * 3600,
+    'ADT': -3 * 3600,
+    'NST': -3.5 * 3600,  # Newfoundland Standard Time
+    'NDT': -2.5 * 3600,
+
+    # South America
+    'BRT': -3 * 3600,    # Brazil
+    'ART': -3 * 3600,    # Argentina
+    'CLT': -4 * 3600,    # Chile
+    'CLST': -3 * 3600,
+
+    # Europe
+    'GMT': 0,
+    'BST': 1 * 3600,     # British Summer Time
+    'CET': 1 * 3600,
+    'CEST': 2 * 3600,
+    'EET': 2 * 3600,
+    'EEST': 3 * 3600,
+
+    # Africa
+    'WAT': 1 * 3600,
+    'CAT': 2 * 3600,
+    'EAT': 3 * 3600,
+
+    # Asia
+    'IST': 5.5 * 3600,   # India
+    'PKT': 5 * 3600,     # Pakistan
+    'ICT': 7 * 3600,     # Indochina
+    'CST-CHINA': 8 * 3600,  # China Standard Time (not US CST!)
+    'JST': 9 * 3600,     # Japan
+    'KST': 9 * 3600,     # Korea
+
+    # Australia
+    'AEST': 10 * 3600,
+    'AEDT': 11 * 3600,
+    'ACST': 9.5 * 3600,
+    'ACDT': 10.5 * 3600,
+    'AWST': 8 * 3600,
+
+    # UTC offsets (as fallback)
+    '-12': -12 * 3600,
+    '-11': -11 * 3600,
+    '-10': -10 * 3600,
+    '-09': -9 * 3600,
+    '-08': -8 * 3600,
+    '-07': -7 * 3600,
+    '-06': -6 * 3600,
+    '-05': -5 * 3600,
+    '-04': -4 * 3600,
+    '-03': -3 * 3600,
+    '-02': -2 * 3600,
+    '-01': -1 * 3600,
+    '+00': 0,
+    '+01': 1 * 3600,
+    '+02': 2 * 3600,
+    '+03': 3 * 3600,
+    '+04': 4 * 3600,
+    '+05': 5 * 3600,
+    '+06': 6 * 3600,
+    '+07': 7 * 3600,
+    '+08': 8 * 3600,
+    '+09': 9 * 3600,
+    '+10': 10 * 3600,
+    '+11': 11 * 3600,
+    '+12': 12 * 3600,
+}
+
+
 class AllVlrSpider(scrapy.Spider):
     name = "vlr"
     allowed_domains = ["vlr.gg"]
@@ -48,6 +131,8 @@ class AllVlrSpider(scrapy.Spider):
             "reply_user": {},
             "flag_url": "",
             "flair_url": "",
+            "total_comment_length": 0,
+            "interaction_count": 0,
         }
 
     def parse(self, response):
@@ -84,24 +169,33 @@ class AllVlrSpider(scrapy.Spider):
 
     def parse_discussion(self, response):
         original_up, original_down = self.user_is_poster(response)
-        if original_up != -1:  # user is OP
-            op_date_title = response.xpath(
-                '//a[@id="1"]/following-sibling::div[contains(@class,"post-header")]'
-                '//span[contains(@class,"js-date-toggle")]/@title'
-            ).get()
-            if op_date_title and str(self.this_year) in op_date_title:
-                op_date = datetime.strptime(
-                    op_date_title.strip(), "%Y-%m-%d %H:%M:%S"
-                ).date()
-                op_id = response.url + "#op"
-                if op_id not in self.counted_post_ids:
-                    op_quote = self.get_full_quote(
-                        response.xpath('//a[@id="1"]/following-sibling::div[contains(@class,"post-header")]')
-                    )
-                    self._count_year_post(op_date, original_up, original_down, op_id, op_quote)
+        if original_up != -1:          # user is thread starter
+            op_date_title = (response.xpath(
+                '//div[@class="post-footer"]//span[contains(@class,"js-date-toggle")]/@title'
+            ).get() or
+            response.xpath(
+                '//div[@class="post-footer"]//span[contains(@class,"js-date-toggle")]/text()'
+            ).get())
 
-            # all‑time totals
-            self._update_totals(original_up, original_down)
+            if op_date_title and str(self.this_year) in op_date_title:
+                op_date = dateparser.parse(op_date_title.strip(), tzinfos=tzinfos).date()
+
+                op_post_url = response.xpath(
+                    '(//div[contains(@class,"post-footer")]/div[contains(@class,"noselect")]'
+                    '/a[contains(@class,"post-action link")]/@href)[1]'
+                ).get()
+
+                if op_post_url:
+                    op_post_url = response.urljoin(op_post_url).split('#')[0].rstrip('/')
+
+                    if op_post_url not in self.counted_post_ids:
+                        op_quote = self.get_full_quote(
+                            response.xpath('//a[@id="1"]/following-sibling::div[contains(@class,"post-header")]')
+                        )
+                        # add it to processed sets so the loop later will skip it
+                        self.processed_urls.add(op_post_url)
+                        self._count_year_post(op_date, original_up, original_down,
+                                              op_post_url, op_quote, original=True)
 
         user_posts = response.css(
             f'a.post-header-author[href*="/user/{self.username}"]'
@@ -112,7 +206,7 @@ class AllVlrSpider(scrapy.Spider):
         )
 
         for post_author in user_posts:
-            post_url = self.get_full_url(post_author, post_url_xpath, response)
+            post_url = self.get_full_url(post_author, post_url_xpath, response).split('#')[0].rstrip('/')
             if post_url in self.processed_urls:
                 continue
             if not self.user_item.get("flag_code") and not self.user_item.get("flair_url"):
@@ -140,17 +234,17 @@ class AllVlrSpider(scrapy.Spider):
             ).get()
             if not date_title or str(self.this_year) not in date_title:
                 continue
-            post_date = dateparser.parse(date_title.strip()).date()
+            post_date = dateparser.parse(date_title.strip(), tzinfos=tzinfos).date()
 
             upvotes, downvotes = self._extract_votes(post_author)
 
             # year metrics
             if post_url not in self.counted_post_ids:
                 full_quote = self.get_full_quote(post_author)
+                self.user_item["total_comment_length"] += len(full_quote)
                 self._count_year_post(post_date, upvotes, downvotes, post_url, full_quote)
 
             # all‑time vote totals & biggest ±votes
-            self._update_totals(upvotes, downvotes)
             self._maybe_set_biggest(post_author, upvotes, downvotes, post_url)
 
             # fan / reply counts
@@ -177,10 +271,13 @@ class AllVlrSpider(scrapy.Spider):
         )
         return up, down
 
-    def _count_year_post(self, post_date, up, down, unique_id, quote=""):
-        self.year_posts += 1
+    def _count_year_post(self, post_date, up, down, unique_id, quote="", original=False):
+        # if not original:
+        self.year_posts += 1  
         self.year_upvotes += up
         self.year_downvotes += down
+        if up == 0 and down == 0:
+          self.user_item["dead_count"] += 1
         self.day_posts_this_year.add(post_date)
         self.month_counts[post_date.month] += 1
         interaction = abs(up) + abs(down)
@@ -242,17 +339,16 @@ class AllVlrSpider(scrapy.Spider):
 
     def user_is_poster(self, response):
         author = response.xpath(
-            '//a[@id="1"]/following-sibling::div[contains(@class,"post-header")]/'
-            'a[contains(@class,"post-header-author")]/text()'
+            '//a[@id="1"]/following::div[contains(@class,"post-header")]//a[contains(@class,"post-header-author")]/text()'
         ).get()
-
         if not author or author.strip() != self.username:
             return -1, -1          
 
         frag_txt = response.xpath("//div[@id='thread-frag-count']/text()").get()
 
         if frag_txt is None:        
-            return -1, -1           
+            return -1, -1          
+         
         count = int(frag_txt.strip() or 0)
         return (count, 0) if count > 0 else (0, count) if count < 0 else (0, 0)
 
@@ -277,7 +373,7 @@ class AllVlrSpider(scrapy.Spider):
             self.interacted_posts, key=lambda d: d["interaction"], reverse=True
         )[:5]
 
-        top_fans = sorted(self.reply_counter.items(), key=lambda kv: kv[1], reverse=True)[:5]
+        top_fans = sorted(self.reply_counter.items(), key=lambda kv: kv[1], reverse=True)[:10]
 
         with open('team_logos.json', 'r') as f:
           team_logos = json.load(f)
@@ -297,12 +393,14 @@ class AllVlrSpider(scrapy.Spider):
             "upvotes_this_year": self.year_upvotes,
             "downvotes_this_year": self.year_downvotes,
             "net_votes_this_year": self.year_upvotes + self.year_downvotes,
+            "dead_posts_this_year": self.user_item.get("dead_count"),
             "most_active_month": most_active_month,  # 1‑Jan … 12‑Dec
             "longest_post_streak_days": longest,
             "top_5_posts_by_interaction": top_posts,
             "top_5_biggest_fans": [{"user": u, "replies": n} for u, n in top_fans],
             "flag_code": self.user_item.get("flag_code"),
-            "flair_url": dark_url or light_url 
+            "flair_url": dark_url or light_url,
+            "average_comment_length": self.user_item.get("total_comment_length") / self.year_posts if self.year_posts else 0,
         }
 
         os.makedirs("wrapped-data", exist_ok=True)

@@ -69,7 +69,7 @@
 
     .card-container {
       width: 1200px;
-      height: 720px;
+      height: 745px;
       position: relative;
       overflow: hidden;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -109,7 +109,7 @@
       position: relative;
       z-index: 1;
       height: 100%;
-      padding: 40px;
+      padding: 30px;
       display: grid;
       grid-template-columns: 1fr 1fr;
       grid-template-rows: auto 1fr auto;
@@ -142,7 +142,7 @@
     .card-username {
       font-size: 1.5rem;
       color: var(--accent);
-      margin-top: 5px;
+      /* margin-top: 5px; */
     }
 
     .stats-section {
@@ -150,6 +150,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      gap: 10px;
     }
 
     .stat-box {
@@ -277,7 +278,7 @@
       justify-content: space-between;
       align-items: center;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
-      padding-top: 10px;
+      padding-top: 11px;
     }
 
     .vlr-logo {
@@ -325,7 +326,7 @@
       }
 
       .card-content {
-        padding: 20px;
+        padding: 15px;
       }
 
       .card-title,
@@ -364,10 +365,64 @@
       text-overflow: ellipsis;
       flex-grow: 1;
     }
+
+    .username-input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .user-flag {
+      width: 30px;
+      height: 24px;
+      border-radius: 8px;
+      background-size: cover;
+      background-position: center;
+    }
+
+
+    .team-logo {
+      width: 80px;
+      height: 80px;
+      background-image: var(--team-logo-url);
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      opacity: 0.9;
+    }
+
+
+    .mini-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+        
+    .mini-stat {
+      background-color: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+        
+    .mini-stat-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+        
+    .mini-stat-label {
+      font-size: 0.7rem;
+      color: rgba(236, 232, 225, 0.7);
+      margin-top: 3px;
+    }
+          
   </style>
 </head>
 <body>
   <div class="controls">
+    <input type="text" id="username-input" class="username-input" placeholder="Enter username..." />
+    <button id="fetch-wrapped">Fetch Wrapped</button>
     <button id="load-custom">Load Custom JSON</button>
   </div>
 
@@ -377,17 +432,18 @@
     <div class="wrapped-card" id="wrapped-card">
       <div class="background-pattern"></div>
       <div class="background-dots"></div>
+      <div class="team-logo-bg" id="team-logo-bg"></div>
       <div class="card-content">
         <div class="card-header">
           <div>
             <div class="card-title">VLR WRAPPED 2025</div>
               <div class="card-username" id="username" style =" display: flex; justify-content: left; align-items: center; gap:5px;">
-                <img id="flag-icon" src="" alt="flag" style="height: 25px; vertical-align: middle; display: none;" />
+                <div class="user-flag" id="user-flag"></div>
                 <span id="username-text">Username</span>
                 <img id="flair-icon" src="" alt="flair" style="height: 25px; vertical-align: middle; display: none;" />
               </div>
           </div>
-          <div class="card-year" id="year"></div>
+            <div class="team-logo" id="team-logo"></div>
         </div>
 
         <div class="stats-section">
@@ -410,6 +466,21 @@
             <div class="stat-title">LONGEST STREAK</div>
             <div class="stat-value" id="streak">0 DAYS</div>
             <div class="stat-caption">Most active in <span id="active-month">N/A</span></div>
+          </div>
+
+          <div class="mini-stats">
+            <div class="mini-stat">
+                <div class="mini-stat-value" id="avg-chars">127</div>
+                <div class="mini-stat-label">AVG POSTS CHARS</div>
+            </div>
+            <div class="mini-stat">
+                <div class="mini-stat-value" id="interaction-rate">1.1</div>
+                <div class="mini-stat-label">AVG INTERACTIONS</div>
+            </div>
+            <div class="mini-stat">
+                <div class="mini-stat-value" id="dead-posts">25%</div>
+                <div class="mini-stat-label">DEAD POSTS</div>
+            </div>
           </div>
         </div>
 
@@ -434,6 +505,36 @@
   </div>
 
   <script>
+
+    document.getElementById('fetch-wrapped').addEventListener('click', async () => {
+      const usernameInput = document.getElementById('username-input');
+      const fetchButton = document.getElementById('fetch-wrapped');
+
+      const username = usernameInput.value.trim();
+      if (!username) return alert('Please enter a username.');
+
+      // Disable button and show loading
+      fetchButton.disabled = true;
+      fetchButton.textContent = 'Fetching...';
+
+      try {
+        const res = await fetch(`http://localhost:5000/wrapped?username=${username}`);
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          alert(`Error: ${data.error || "Something went wrong"}`);
+        } else {
+          renderData(data);
+        }
+      } catch (err) {
+        alert('Failed to fetch wrapped data.');
+      }
+
+      // Re-enable button
+      fetchButton.disabled = false;
+      fetchButton.textContent = 'Fetch Wrapped';
+    });
+
     document.getElementById('load-custom').addEventListener('click', () => {
       const jsonInput = document.getElementById('json-input').value;
       try {
@@ -457,21 +558,18 @@
     function renderData(data) {
       document.getElementById('username-text').textContent = data.username;
 
-      const flagIcon = document.getElementById('flag-icon');
       if (data.flag_code) {
-        flagIcon.src = `https://www.vlr.gg/img/icons/flags/32/${data.flag_code}.png`;
-        flagIcon.style.display = 'inline';
-      } else {
-        flagIcon.style.display = 'none';
+        const url = `https://www.vlr.gg/img/icons/flags/32/${data.flag_code}.png`;
+        const flagElement = document.getElementById('user-flag');
+        flagElement.style.backgroundImage = `url(${url})`;
       }
 
-      const flairIcon = document.getElementById('flair-icon');
       if (data.flair_url) {
-        flairIcon.src = data.flair_url;
-        flairIcon.style.display = 'inline';
-      } else {
-        flairIcon.style.display = 'none';
-      }      
+          const teamLogoBg = document.getElementById('team-logo');
+          teamLogoBg.style.setProperty('--team-logo-url', `url(${data.flair_url})`);
+          teamLogoBg.style.backgroundImage = `url(${data.flair_url})`;
+      }   
+
       document.getElementById('total-posts').textContent = data.total_posts_this_year;
       const now = new Date();
       const currentMonth = now.getMonth() + 1;
@@ -512,6 +610,10 @@
             </div>
           </div>`;
       });
+
+      document.getElementById('avg-chars').textContent = data.average_comment_length.toFixed(2);
+      document.getElementById('interaction-rate').textContent = `${((data.upvotes_this_year + Math.abs(data.downvotes_this_year)) / data.total_posts_this_year).toFixed(2)}`;
+      document.getElementById('dead-posts').textContent = `${(((data.dead_posts_this_year) / data.total_posts_this_year ) * 100).toFixed(2)}%`;
 
       const fansContainer = document.getElementById('fans-list');
       fansContainer.innerHTML = '';
